@@ -24,7 +24,7 @@ fn best_match(input: &[u8]) -> (String, u8) {
         .unwrap()
 }
 
-fn main() {
+fn challenge_3() {
     let input = String::from_utf8(
         "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736".into(),
     )
@@ -33,7 +33,9 @@ fn main() {
     let (best, cipher) = best_match(&input);
 
     println!("Encryption Key: \"{cipher}\" = \"{best}\"");
+}
 
+fn challenge_4() {
     let input = include_str!("../../4.txt");
     let lines: Vec<String> = input
         .lines()
@@ -51,4 +53,9 @@ fn main() {
     for (i, line) in lines.iter().enumerate() {
         println!("{i}: {line:?}");
     }
+}
+
+fn main() {
+    challenge_3();
+    challenge_4();
 }
