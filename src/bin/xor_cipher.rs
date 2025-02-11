@@ -1,9 +1,8 @@
 use std::fmt::Display;
 
 use cryptopals::hex;
-use itertools::Itertools;
 
-fn byte_decrypt(input: &[u8], cipher: u8) -> Vec<u8> {
+fn byte_xor(input: &[u8], cipher: u8) -> Vec<u8> {
     input.into_iter().map(|b| b ^ cipher).collect()
 }
 
@@ -42,7 +41,7 @@ fn best_match(input: &[u8]) -> Decrypted {
 fn ascii_matches(input: &[u8]) -> Vec<Decrypted> {
     (0..255)
         .filter_map(|cipher| {
-            let decrypted = byte_decrypt(&input, cipher);
+            let decrypted = byte_xor(&input, cipher);
             String::from_utf8(decrypted)
                 .ok()
                 .map(|msg| Decrypted { msg, cipher })

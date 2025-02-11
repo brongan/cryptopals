@@ -15,6 +15,15 @@ pub fn hex_to_base64(input: &str) -> String {
     base64::encode(&bytes)
 }
 
+#[allow(dead_code)]
+fn repeating_key_xor(input: &[u8], key: &[u8]) -> Vec<u8> {
+    input
+        .into_iter()
+        .enumerate()
+        .map(|(i, b)| key[i % key.len()] ^ b)
+        .collect()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -34,5 +43,15 @@ mod test {
         const HEX: &str = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
         const BASE64: &str = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
         assert_eq!(hex_to_base64(HEX), BASE64);
+    }
+
+    #[test]
+    fn challenge_5() {
+        let input = b"Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+        let key = b"ICE";
+        assert_eq!(
+            hex::encode(&repeating_key_xor(input, key)),
+            "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
+        );
     }
 }
