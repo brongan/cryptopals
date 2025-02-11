@@ -10,6 +10,26 @@ pub fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
 }
 
 #[allow(dead_code)]
+fn hamming_distance(l: &[u8], r: &[u8]) -> u32 {
+    if l.len() != r.len() {
+        panic!("cannot xor!");
+    }
+    xor(l, r)
+        .into_iter()
+        .map(|b| {
+            (b & 0b00000001 != 0) as u32
+                + (b & 0b00000010 != 0) as u32
+                + (b & 0b00000100 != 0) as u32
+                + (b & 0b00001000 != 0) as u32
+                + (b & 0b00010000 != 0) as u32
+                + (b & 0b00100000 != 0) as u32
+                + (b & 0b01000000 != 0) as u32
+                + (b & 0b10000000 != 0) as u32
+        })
+        .sum()
+}
+
+#[allow(dead_code)]
 pub fn hex_to_base64(input: &str) -> String {
     let bytes = hex::decode(input);
     base64::encode(&bytes)
@@ -53,5 +73,10 @@ mod test {
             hex::encode(&repeating_key_xor(input, key)),
             "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
         );
+    }
+
+    #[test]
+    fn test_hamming_distance() {
+        assert_eq!(hamming_distance(b"this is a test", b"wokka wokka!!!"), 37);
     }
 }
