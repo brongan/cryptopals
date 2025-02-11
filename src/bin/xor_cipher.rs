@@ -1,27 +1,54 @@
-use cryptopals::hex;
+use std::fmt::Display;
 
-fn cipher_score(decoded: &str) -> usize {
-    if !decoded.chars().map(|c| c.is_ascii()).all(|x| x) {
-        return 0;
-    }
-    if decoded.chars().filter(|c| *c == '\n').count() > 0 {
-        return 0;
-    }
-    decoded.chars().filter(|c| *c == ' ').count()
-}
+use cryptopals::hex;
+use itertools::Itertools;
 
 fn byte_decrypt(input: &[u8], cipher: u8) -> Vec<u8> {
     input.into_iter().map(|b| b ^ cipher).collect()
 }
 
-fn best_match(input: &[u8]) -> (String, u8) {
+#[derive(Debug)]
+struct Decrypted {
+    msg: String,
+    cipher: u8,
+}
+
+impl Decrypted {
+    fn score(&self) -> usize {
+        self.msg.chars().filter(|c| c.is_ascii_graphic()).count()
+            + 10 * self.msg.chars().filter(|c| *c == ' ').count()
+    }
+}
+
+impl Display for Decrypted {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "score: {}, cipher: {}, msg: {:?}",
+            self.score(),
+            self.cipher,
+            self.msg
+        )
+    }
+}
+
+fn best_match(input: &[u8]) -> Decrypted {
+    ascii_matches(input)
+        .into_iter()
+        .max_by(|l, r| l.score().cmp(&r.score()))
+        .unwrap()
+}
+
+fn ascii_matches(input: &[u8]) -> Vec<Decrypted> {
     (0..255)
         .filter_map(|cipher| {
             let decrypted = byte_decrypt(&input, cipher);
-            String::from_utf8(decrypted).ok().map(|msg| (msg, cipher))
+            String::from_utf8(decrypted)
+                .ok()
+                .map(|msg| Decrypted { msg, cipher })
         })
-        .max_by(|(l, c1), (r, c2)| cipher_score(l).cmp(&cipher_score(&r)))
-        .unwrap()
+        .filter(|Decrypted { msg, cipher: _ }| msg.chars().all(|c| c.is_ascii()))
+        .collect()
 }
 
 fn challenge_3() {
@@ -30,29 +57,27 @@ fn challenge_3() {
     )
     .unwrap();
     let input = hex::decode(&input);
-    let (best, cipher) = best_match(&input);
+    let best = best_match(&input);
 
-    println!("Encryption Key: \"{cipher}\" = \"{best}\"");
+    println!("{best}");
 }
 
 fn challenge_4() {
     let input = include_str!("../../4.txt");
-    let lines: Vec<String> = input
+    let decrypted: Vec<_> = input
         .lines()
         .map(|line| {
             let line = hex::decode(line);
-            (0..255)
-                .map(|cipher| byte_decrypt(&line, cipher))
-                .filter_map(|decrypted| String::from_utf8(decrypted).ok())
-                .collect::<Vec<_>>()
-            // .max_by(|x, y| cipher_score(x).cmp(&cipher_score(y)))
+            ascii_matches(&line)
         })
         .flatten()
         .collect();
 
-    for (i, line) in lines.iter().enumerate() {
-        println!("{i}: {line:?}");
-    }
+    let best = decrypted
+        .into_iter()
+        .max_by_key(|decrypted| decrypted.score())
+        .unwrap();
+    println!("{best}");
 }
 
 fn main() {
