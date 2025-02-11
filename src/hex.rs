@@ -3,10 +3,9 @@ use itertools::Itertools;
 pub fn decode(input: &str) -> Vec<u8> {
     input
         .bytes()
-        .into_iter()
         .map(|b| match b as char {
-            '0'..='9' => b - '0' as u8,
-            'a'..='f' => b - 'a' as u8 + 10,
+            '0'..='9' => b - b'0',
+            'a'..='f' => b - b'a' + 10,
             _ => panic!("invalid character: {:?}", b as char),
         })
         .chunks(2)
@@ -18,19 +17,18 @@ pub fn decode(input: &str) -> Vec<u8> {
 #[allow(dead_code)]
 pub fn encode(input: &[u8]) -> String {
     let encode_quartet = |b| match b {
-        0..=9 => ('0' as u8 + b) as char,
-        10..=15 => ('a' as u8 + (b - 10)) as char,
+        0..=9 => (b'0' + b) as char,
+        10..=15 => (b'a' + (b - 10)) as char,
         _ => panic!("invalid quartet: {b}"),
     };
 
     input
-        .into_iter()
-        .map(|b| {
+        .iter()
+        .flat_map(|b| {
             let l = b >> 4;
             let r = (b << 4) >> 4;
             [encode_quartet(l), encode_quartet(r)]
         })
-        .flatten()
         .collect()
 }
 
@@ -56,7 +54,7 @@ mod test {
 
     #[test]
     fn test_hex() {
-        let arr = &[b'M', b'a', b'n'];
+        let arr = b"Man";
         assert_eq!(decode(&encode(arr)), arr);
     }
 }

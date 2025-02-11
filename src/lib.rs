@@ -6,7 +6,7 @@ pub fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
     if l.len() != r.len() {
         panic!("cannot xor!");
     }
-    l.into_iter().zip(r).map(|(l, r)| l ^ r).collect()
+    l.iter().zip(r).map(|(l, r)| l ^ r).collect()
 }
 
 #[allow(dead_code)]
@@ -18,7 +18,7 @@ pub fn hex_to_base64(input: &str) -> String {
 #[allow(dead_code)]
 fn repeating_key_xor(input: &[u8], key: &[u8]) -> Vec<u8> {
     input
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(i, b)| key[i % key.len()] ^ b)
         .collect()

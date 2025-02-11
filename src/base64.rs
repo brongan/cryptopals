@@ -2,9 +2,9 @@ use itertools::Itertools;
 
 fn encode_sextet(sextet: u8) -> char {
     match sextet {
-        0..=25 => ('A' as u8 + sextet) as char,
-        26..=51 => ('a' as u8 + sextet - 26) as char,
-        52..=61 => ('0' as u8 + (sextet - 52)) as char,
+        0..=25 => (b'A' + sextet) as char,
+        26..=51 => (b'a' + sextet - 26) as char,
+        52..=61 => (b'0' + (sextet - 52)) as char,
         62 => '+',
         63 => '/',
         _ => panic!("invalid sextet: {sextet}"),
@@ -33,9 +33,9 @@ pub fn encode(bytes: &[u8]) -> String {
 
 fn decode_sextet(c: char) -> u8 {
     match c {
-        'A'..='Z' => 0 + c as u8 - 'A' as u8,
-        'a'..='z' => 26 + c as u8 - 'a' as u8,
-        '0'..='9' => 52 + c as u8 - '0' as u8,
+        'A'..='Z' => (c as u8) - b'A',
+        'a'..='z' => 26 + c as u8 - b'a',
+        '0'..='9' => 52 + c as u8 - b'0',
         '+' => 62,
         '/' => 63,
         _ => panic!("invalid base64 char: {c}"),
@@ -83,6 +83,6 @@ mod test {
 
     #[test]
     fn test_man() {
-        assert_eq!(encode(&[b'M', b'a', b'n']), "TWFu");
+        assert_eq!(encode(b"Man"), "TWFu");
     }
 }

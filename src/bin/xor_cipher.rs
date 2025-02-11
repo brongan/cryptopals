@@ -3,7 +3,7 @@ use std::fmt::Display;
 use cryptopals::hex;
 
 fn byte_xor(input: &[u8], cipher: u8) -> Vec<u8> {
-    input.into_iter().map(|b| b ^ cipher).collect()
+    input.iter().map(|b| b ^ cipher).collect()
 }
 
 #[derive(Debug)]
@@ -41,12 +41,12 @@ fn best_match(input: &[u8]) -> Decrypted {
 fn ascii_matches(input: &[u8]) -> Vec<Decrypted> {
     (0..255)
         .filter_map(|cipher| {
-            let decrypted = byte_xor(&input, cipher);
+            let decrypted = byte_xor(input, cipher);
             String::from_utf8(decrypted)
                 .ok()
                 .map(|msg| Decrypted { msg, cipher })
         })
-        .filter(|Decrypted { msg, cipher: _ }| msg.chars().all(|c| c.is_ascii()))
+        .filter(|Decrypted { msg, cipher: _ }| msg.is_ascii())
         .collect()
 }
 
@@ -65,11 +65,10 @@ fn challenge_4() {
     let input = include_str!("../../4.txt");
     let decrypted: Vec<_> = input
         .lines()
-        .map(|line| {
+        .flat_map(|line| {
             let line = hex::decode(line);
             ascii_matches(&line)
         })
-        .flatten()
         .collect();
 
     let best = decrypted
