@@ -7,7 +7,7 @@ fn encode_sextet(sextet: u8) -> char {
         52..=61 => ('0' as u8 + (sextet - 52)) as char,
         62 => '+',
         63 => '/',
-        _ => '=',
+        _ => panic!("invalid sextet: {sextet}"),
     }
 }
 
@@ -38,7 +38,7 @@ fn decode_sextet(c: char) -> u8 {
         '0'..='9' => 52 + c as u8 - '0' as u8,
         '+' => 62,
         '/' => 63,
-        _ => panic!("owow"),
+        _ => panic!("invalid base64 char: {c}"),
     }
 }
 

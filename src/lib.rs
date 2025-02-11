@@ -1,8 +1,8 @@
-mod base64;
-mod hex;
+pub mod base64;
+pub mod hex;
 
 #[allow(dead_code)]
-fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
+pub fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
     if l.len() != r.len() {
         panic!("cannot xor!");
     }
@@ -10,7 +10,7 @@ fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
 }
 
 #[allow(dead_code)]
-fn hex_to_base64(input: &str) -> String {
+pub fn hex_to_base64(input: &str) -> String {
     let bytes = hex::decode(input);
     base64::encode(&bytes)
 }

@@ -7,7 +7,7 @@ pub fn decode(input: &str) -> Vec<u8> {
         .map(|b| match b as char {
             '0'..='9' => b - '0' as u8,
             'a'..='f' => b - 'a' as u8 + 10,
-            _ => panic!("invalid character: {b}"),
+            _ => panic!("invalid character: {:?}", b as char),
         })
         .chunks(2)
         .into_iter()
@@ -20,7 +20,7 @@ pub fn encode(input: &[u8]) -> String {
     let encode_quartet = |b| match b {
         0..=9 => ('0' as u8 + b) as char,
         10..=15 => ('a' as u8 + (b - 10)) as char,
-        _ => panic!("invalid quartet"),
+        _ => panic!("invalid quartet: {b}"),
     };
 
     input
