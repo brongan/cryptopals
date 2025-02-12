@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
-use cryptopals::hex;
+use cryptopals::{base64, hamming_distance, hex};
+use itertools::Itertools;
 
 fn byte_xor(input: &[u8], cipher: u8) -> Vec<u8> {
     input.iter().map(|b| b ^ cipher).collect()
@@ -61,6 +62,9 @@ fn challenge_3() {
     println!("{best}");
 }
 
+fn best_single_character_xor(input: &[&str]) -> Decrypted {
+};
+
 fn challenge_4() {
     let input = include_str!("../../4.txt");
     let decrypted: Vec<_> = input
@@ -78,7 +82,37 @@ fn challenge_4() {
     println!("{best}");
 }
 
+fn score_key_size(input: &[u8], keysize: usize) -> usize {
+    // For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
+    let slice1 = &input[..keysize];
+    let slice2 = &input[keysize..(keysize * 2)];
+    hamming_distance(slice1, slice2) / keysize
+}
+
+fn challenge_5() {
+    let mut input = include_str!("../../6.txt").to_owned();
+    input.retain(|c| !c.is_whitespace());
+    let input = base64::decode(&input);
+
+    // Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
+    let best_key_size = (2..=40)
+        .max_by_key(|key_size| score_key_size(&input, *key_size))
+        .unwrap();
+    // Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
+    // Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
+    let mut blocks = vec![vec![]; best_key_size];
+    for chunk in &input.into_iter().chunks(best_key_size) {
+        for (i, byte) in chunk.into_iter().enumerate() {
+            blocks[i].push(byte);
+        }
+    }
+    // Solve each block as if it was single-character XOR. You already have code to do this.
+    //  For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
+    println!("{}", best_single_character_xor(&blocks));
+}
+
 fn main() {
     challenge_3();
     challenge_4();
+    challenge_5();
 }
