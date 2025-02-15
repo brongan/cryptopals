@@ -10,7 +10,7 @@ pub fn decode(input: &str) -> Vec<u8> {
         })
         .chunks(2)
         .into_iter()
-        .map(|mut chunk| chunk.next().unwrap() << 4 | chunk.next().unwrap())
+        .map(|mut chunk| (chunk.next().unwrap() << 4) | chunk.next().unwrap())
         .collect()
 }
 

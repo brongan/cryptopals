@@ -62,7 +62,7 @@ pub fn decode(input: &str) -> Vec<u8> {
         let c2 = decode_sextet(chunk.next().unwrap());
         let c3 = decode_sextet(chunk.next().unwrap());
 
-        let b0 = c0 << 2 | c1.unwrap_or(0) >> 4;
+        let b0 = (c0 << 2) | (c1.unwrap_or(0) >> 4);
         ret.push(b0);
 
         if c1.is_none() {
@@ -70,7 +70,7 @@ pub fn decode(input: &str) -> Vec<u8> {
         }
         let c1 = c1.unwrap();
 
-        let b1 = c1 << 4 | c2.unwrap_or(0) >> 2;
+        let b1 = (c1 << 4) | (c2.unwrap_or(0) >> 2);
         ret.push(b1);
 
         if c2.is_none() {
@@ -81,7 +81,7 @@ pub fn decode(input: &str) -> Vec<u8> {
             continue;
         }
 
-        let b2 = c2 << 6 | c3.unwrap_or(0);
+        let b2 = (c2 << 6) | c3.unwrap_or(0);
         ret.push(b2);
     }
     ret

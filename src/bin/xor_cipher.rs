@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use cryptopals::{base64, hamming_distance, hex};
+use cryptopals::{base64, hamming_distance, hex, repeating_key_xor};
 use itertools::Itertools;
 
 fn byte_xor(input: &[u8], cipher: u8) -> Vec<u8> {
@@ -14,9 +14,10 @@ struct Decrypted {
 }
 
 impl Decrypted {
-    fn score(&self) -> usize {
-        self.msg.chars().filter(|c| c.is_ascii_graphic()).count()
-            + 10 * self.msg.chars().filter(|c| *c == ' ').count()
+    fn score(&self) -> i64 {
+        self.msg.chars().filter(|c| c.is_ascii_graphic()).count() as i64
+            + 10 * self.msg.chars().filter(|c| *c == ' ').count() as i64
+            - 20 * self.msg.chars().filter(|c| *c == '\\').count() as i64
     }
 }
 
@@ -51,35 +52,30 @@ fn ascii_matches(input: &[u8]) -> Vec<Decrypted> {
         .collect()
 }
 
-fn challenge_3() {
+fn challenge_3() -> Decrypted {
     let input = String::from_utf8(
         "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736".into(),
     )
     .unwrap();
     let input = hex::decode(&input);
-    let best = best_match(&input);
-
-    println!("{best}");
+    best_match(&input)
 }
 
-fn best_single_character_xor(input: &[&str]) -> Decrypted {
-};
+fn best_single_character_xor(input: &[Vec<u8>]) -> Decrypted {
+    let decrypted: Vec<_> = input.iter().flat_map(|line| ascii_matches(line)).collect();
 
-fn challenge_4() {
-    let input = include_str!("../../4.txt");
-    let decrypted: Vec<_> = input
-        .lines()
-        .flat_map(|line| {
-            let line = hex::decode(line);
-            ascii_matches(&line)
-        })
-        .collect();
-
-    let best = decrypted
+    decrypted
         .into_iter()
         .max_by_key(|decrypted| decrypted.score())
-        .unwrap();
-    println!("{best}");
+        .unwrap()
+}
+
+fn challenge_4() -> Decrypted {
+    let input: Vec<_> = include_str!("../../4.txt")
+        .lines()
+        .map(hex::decode)
+        .collect();
+    best_single_character_xor(&input)
 }
 
 fn score_key_size(input: &[u8], keysize: usize) -> usize {
@@ -89,7 +85,7 @@ fn score_key_size(input: &[u8], keysize: usize) -> usize {
     hamming_distance(slice1, slice2) / keysize
 }
 
-fn challenge_5() {
+fn challenge_6() -> String {
     let mut input = include_str!("../../6.txt").to_owned();
     input.retain(|c| !c.is_whitespace());
     let input = base64::decode(&input);
@@ -98,21 +94,34 @@ fn challenge_5() {
     let best_key_size = (2..=40)
         .max_by_key(|key_size| score_key_size(&input, *key_size))
         .unwrap();
+    println!("best_key_size: {best_key_size}");
+
     // Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
     // Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
     let mut blocks = vec![vec![]; best_key_size];
-    for chunk in &input.into_iter().chunks(best_key_size) {
+    for chunk in &input.iter().cloned().chunks(best_key_size) {
         for (i, byte) in chunk.into_iter().enumerate() {
             blocks[i].push(byte);
         }
     }
+
     // Solve each block as if it was single-character XOR. You already have code to do this.
     //  For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
-    println!("{}", best_single_character_xor(&blocks));
+    let key: Vec<u8> = blocks
+        .into_iter()
+        .map(|block| {
+            let best = best_match(&block);
+            println!("{best}");
+            best.cipher
+        })
+        .collect();
+
+    let decrypted = repeating_key_xor(&input, &key);
+    String::from_utf8(decrypted).unwrap()
 }
 
 fn main() {
-    challenge_3();
-    challenge_4();
-    challenge_5();
+    println!("Challenge 3: {}", challenge_3());
+    println!("Challenge 4: {}", challenge_4());
+    println!("Challenge 5: {}", challenge_6());
 }

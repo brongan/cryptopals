@@ -1,7 +1,6 @@
 pub mod base64;
 pub mod hex;
 
-#[allow(dead_code)]
 pub fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
     if l.len() != r.len() {
         panic!("cannot xor!");
@@ -9,7 +8,6 @@ pub fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
     l.iter().zip(r).map(|(l, r)| l ^ r).collect()
 }
 
-#[allow(dead_code)]
 pub fn hamming_distance(l: &[u8], r: &[u8]) -> usize {
     if l.len() != r.len() {
         panic!("cannot xor!");
@@ -29,14 +27,12 @@ pub fn hamming_distance(l: &[u8], r: &[u8]) -> usize {
         .sum()
 }
 
-#[allow(dead_code)]
 pub fn hex_to_base64(input: &str) -> String {
     let bytes = hex::decode(input);
     base64::encode(&bytes)
 }
 
-#[allow(dead_code)]
-fn repeating_key_xor(input: &[u8], key: &[u8]) -> Vec<u8> {
+pub fn repeating_key_xor(input: &[u8], key: &[u8]) -> Vec<u8> {
     input
         .iter()
         .enumerate()
