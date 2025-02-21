@@ -1,3 +1,4 @@
+#![feature(iter_map_windows)]
 use std::fmt::Display;
 
 use cryptopals::{base64, hamming_distance, hex, repeating_key_xor};
@@ -16,8 +17,8 @@ struct Decrypted {
 impl Decrypted {
     fn score(&self) -> i64 {
         self.msg.chars().filter(|c| c.is_ascii_graphic()).count() as i64
+            - self.msg.chars().count() as i64
             + 10 * self.msg.chars().filter(|c| *c == ' ').count() as i64
-            - 20 * self.msg.chars().filter(|c| *c == '\\').count() as i64
     }
 }
 
@@ -78,11 +79,20 @@ fn challenge_4() -> Decrypted {
     best_single_character_xor(&input)
 }
 
-fn score_key_size(input: &[u8], keysize: usize) -> usize {
-    // For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
-    let slice1 = &input[..keysize];
-    let slice2 = &input[keysize..(keysize * 2)];
-    hamming_distance(slice1, slice2) / keysize
+fn score_key_size(input: &[u8], keysize: usize) -> f64 {
+    // For each KEYSIZE, take the first KEYSIZE worth of bytes,
+    // and the second KEYSIZE worth of bytes,
+    // and find the edit distance between them.
+    // Normalize this result by dividing by KEYSIZE.
+    // You could proceed perhaps with the smallest 2-3 KEYSIZE values.
+    // Or take 4 KEYSIZE blocks instead of 2 and average the distances.
+    let num_blocks = 4;
+    input
+        .chunks_exact(keysize)
+        .take(num_blocks)
+        .permutations(2)
+        .map(|perm| hamming_distance(perm[0], perm[1]) as f64 / keysize as f64)
+        .sum::<f64>()
 }
 
 fn challenge_6() -> String {
@@ -91,13 +101,18 @@ fn challenge_6() -> String {
     let input = base64::decode(&input);
 
     // Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
+    // The KEYSIZE with the smallest normalized edit distance is probably the key.
     let best_key_size = (2..=40)
-        .max_by_key(|key_size| score_key_size(&input, *key_size))
+        .min_by(|a, b| {
+            score_key_size(&input, *a)
+                .partial_cmp(&score_key_size(&input, *b))
+                .unwrap()
+        })
         .unwrap();
-    println!("best_key_size: {best_key_size}");
 
     // Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
-    // Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on.
+    // Now transpose the blocks: make a block that is the first byte of every block,
+    // and a block that is the second byte of every block, and so on.
     let mut blocks = vec![vec![]; best_key_size];
     for chunk in &input.iter().cloned().chunks(best_key_size) {
         for (i, byte) in chunk.into_iter().enumerate() {
@@ -106,14 +121,11 @@ fn challenge_6() -> String {
     }
 
     // Solve each block as if it was single-character XOR. You already have code to do this.
-    //  For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
+    //  For each block, the single-byte XOR key that produces the best looking histogram
+    //  is the repeating-key XOR key byte for that block. Put them together and you have the key.
     let key: Vec<u8> = blocks
         .into_iter()
-        .map(|block| {
-            let best = best_match(&block);
-            println!("{best}");
-            best.cipher
-        })
+        .map(|block| best_match(&block).cipher)
         .collect();
 
     let decrypted = repeating_key_xor(&input, &key);
