@@ -132,8 +132,14 @@ fn challenge_6() -> String {
     String::from_utf8(decrypted).unwrap()
 }
 
+fn challenge_7() -> String {
+    let input = base64::decode(include_str!("../../7.txt"));
+    let key = b"YELLOW SUBMARINE";
+}
+
 fn main() {
     println!("Challenge 3: {}", challenge_3());
     println!("Challenge 4: {}", challenge_4());
-    println!("Challenge 5: {}", challenge_6());
+    println!("Challenge 6: {}", challenge_6());
+    println!("Challenge 7: {}", challenge_7());
 }
