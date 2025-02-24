@@ -135,6 +135,7 @@ fn challenge_6() -> String {
 fn challenge_7() -> String {
     let input = base64::decode(include_str!("../../7.txt"));
     let key = b"YELLOW SUBMARINE";
+    todo!();
 }
 
 fn main() {
