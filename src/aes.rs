@@ -46,34 +46,35 @@ impl BitXorAssign for Word {
         self[3] ^= rhs[3];
     }
 }
-
+/*
 fn sbox_inv_map() -> &'static [u8; 255] {
     static INSTANCE: OnceCell<[u8; 255]> = OnceCell::new();
     INSTANCE.get_or_init(|| {
         let mut sbox = [0; 255];
         uint8_t p = 1, q = 1;
-	
-	/* loop invariant: p * q == 1 in the Galois field */
-	do {
-		/* multiply p by 3 */
-		p = p ^ (p << 1) ^ (p & 0x80 ? 0x1B : 0);
 
-		/* divide q by 3 (equals multiplication by 0xf6) */
-		q ^= q << 1;
-		q ^= q << 2;
-		q ^= q << 4;
-		q ^= q & 0x80 ? 0x09 : 0;
+    /* loop invariant: p * q == 1 in the Galois field */
+    do {
+        /* multiply p by 3 */
+        p = p ^ (p << 1) ^ (p & 0x80 ? 0x1B : 0);
 
-		/* compute the affine transformation */
-		uint8_t xformed = q ^ ROTL8(q, 1) ^ ROTL8(q, 2) ^ ROTL8(q, 3) ^ ROTL8(q, 4);
+        /* divide q by 3 (equals multiplication by 0xf6) */
+        q ^= q << 1;
+        q ^= q << 2;
+        q ^= q << 4;
+        q ^= q & 0x80 ? 0x09 : 0;
 
-		sbox[p] = xformed ^ 0x63;
-	} while (p != 1);
+        /* compute the affine transformation */
+        uint8_t xformed = q ^ ROTL8(q, 1) ^ ROTL8(q, 2) ^ ROTL8(q, 3) ^ ROTL8(q, 4);
+
+        sbox[p] = xformed ^ 0x63;
+    } while (p != 1);
         sbox[0] = 0x63;
 
         sbox
     })
 }
+*/
 
 fn sbox_inv(b: u8) -> u8 {
     todo!()
@@ -245,11 +246,11 @@ fn aes_128_ecb_decrypt_block(state: &mut State, master: &[u8; 16]) {
 }
 
 // Yi = F(PlainTexti, Key)
-pub fn aes_128_ecb_decrypt(ciphertext: &mut [u8], master_key: &[u8; 16]) {
-    if ciphertext.len() % 16 != 0 {
+pub fn aes_128_ecb_decrypt(ciphertext: &mut [Word], master_key: &[u8; 16]) {
+    if ciphertext.len() % 4 != 0 {
         panic!("aes_128_ecb requires ciphertext to be multiple of 16 bytes");
     }
-    for block in unsafe { ciphertext.as_chunks_unchecked_mut::<16>() } {
+    for block in unsafe { ciphertext.as_chunks_unchecked_mut::<4>() } {
         aes_128_ecb_decrypt_block(block, master_key);
     }
 }

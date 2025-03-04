@@ -49,7 +49,7 @@ fn decode_sextet(c: char) -> Option<u8> {
         '+' => Some(62),
         '/' => Some(63),
         '=' => None,
-        _ => panic!("invalid base64 char: {c}"),
+        _ => panic!("invalid base64 char: {c:?}"),
     }
 }
 

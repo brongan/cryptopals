@@ -10,23 +10,8 @@ pub fn xor(l: &[u8], r: &[u8]) -> Vec<u8> {
     l.iter().zip(r).map(|(l, r)| l ^ r).collect()
 }
 
-pub fn hamming_distance(l: &[u8], r: &[u8]) -> usize {
-    if l.len() != r.len() {
-        panic!("cannot xor!");
-    }
-    xor(l, r)
-        .into_iter()
-        .map(|b| {
-            (b & 0b00000001 != 0) as usize
-                + (b & 0b00000010 != 0) as usize
-                + (b & 0b00000100 != 0) as usize
-                + (b & 0b00001000 != 0) as usize
-                + (b & 0b00010000 != 0) as usize
-                + (b & 0b00100000 != 0) as usize
-                + (b & 0b01000000 != 0) as usize
-                + (b & 0b10000000 != 0) as usize
-        })
-        .sum()
+pub fn hamming_distance(l: &[u8], r: &[u8]) -> u32 {
+    xor(l, r).into_iter().map(u8::count_ones).sum()
 }
 
 pub fn hex_to_base64(input: &str) -> String {

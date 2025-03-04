@@ -133,7 +133,11 @@ fn challenge_6() -> String {
 }
 
 fn challenge_7() -> String {
-    let input = base64::decode(include_str!("../../7.txt"));
+    print!("Part 7: ");
+    let mut input = include_str!("../../7.txt").to_owned();
+    input.retain(|c| !c.is_whitespace());
+    let input = base64::decode(&input);
+
     let key = b"YELLOW SUBMARINE";
     todo!();
 }
