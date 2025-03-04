@@ -90,8 +90,8 @@ fn score_key_size(input: &[u8], keysize: usize) -> f64 {
     input
         .chunks_exact(keysize)
         .take(num_blocks)
-        .permutations(2)
-        .map(|perm| hamming_distance(perm[0], perm[1]) as f64 / keysize as f64)
+        .combinations(2)
+        .map(|combination| hamming_distance(combination[0], combination[1]) as f64 / keysize as f64)
         .sum::<f64>()
 }
 
