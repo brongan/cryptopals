@@ -1,7 +1,4 @@
-use std::{
-    cell::OnceCell,
-    ops::{BitXor, BitXorAssign, Index, IndexMut},
-};
+use std::ops::{BitXor, BitXorAssign, Index, IndexMut};
 
 // N as the length of the key in 32-bit words:
 // 4 words for AES-128

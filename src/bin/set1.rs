@@ -12,44 +12,48 @@ fn byte_xor(input: &[u8], cipher: u8) -> Vec<u8> {
 struct Decrypted {
     msg: String,
     cipher: u8,
+    score: i64,
 }
 
 impl Decrypted {
-    fn score(&self) -> i64 {
-        self.msg.chars().filter(|c| c.is_ascii_graphic()).count() as i64
-            - self.msg.chars().count() as i64
-            + 10 * self.msg.chars().filter(|c| *c == ' ').count() as i64
+    fn new(msg: String, cipher: u8) -> Decrypted {
+        let score = msg
+            .chars()
+            .map(|c| {
+                match c {
+                    '!'..='~' => 1, // is_ascii_graphic
+                    ' ' => 10,
+                    _ => 0,
+                }
+            })
+            .sum();
+        Decrypted { msg, cipher, score }
     }
 }
 
 impl Display for Decrypted {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "score: {}, cipher: {}, msg: {:?}",
-            self.score(),
-            self.cipher,
-            self.msg
-        )
+        let &Self { msg, cipher, score } = &self;
+        write!(f, "score: {score}, cipher: {cipher:08b}, msg: {msg:?}",)
     }
 }
 
-fn best_match(input: &[u8]) -> Decrypted {
-    ascii_matches(input)
+fn single_byte_decrypt(input: &[u8]) -> Decrypted {
+    single_byte_decrypt_candidates(input)
         .into_iter()
-        .max_by(|l, r| l.score().cmp(&r.score()))
+        .max_by(|l, r| l.score.cmp(&r.score))
         .unwrap()
 }
 
-fn ascii_matches(input: &[u8]) -> Vec<Decrypted> {
-    (0..255)
+fn single_byte_decrypt_candidates(input: &[u8]) -> Vec<Decrypted> {
+    (0..=255)
         .filter_map(|cipher| {
             let decrypted = byte_xor(input, cipher);
             String::from_utf8(decrypted)
                 .ok()
-                .map(|msg| Decrypted { msg, cipher })
+                .filter(|msg| msg.is_ascii())
+                .map(|msg| Decrypted::new(msg, cipher))
         })
-        .filter(|Decrypted { msg, cipher: _ }| msg.is_ascii())
         .collect()
 }
 
@@ -59,24 +63,16 @@ fn challenge_3() -> Decrypted {
     )
     .unwrap();
     let input = hex::decode(&input);
-    best_match(&input)
-}
-
-fn best_single_character_xor(input: &[Vec<u8>]) -> Decrypted {
-    let decrypted: Vec<_> = input.iter().flat_map(|line| ascii_matches(line)).collect();
-
-    decrypted
-        .into_iter()
-        .max_by_key(|decrypted| decrypted.score())
-        .unwrap()
+    single_byte_decrypt(&input)
 }
 
 fn challenge_4() -> Decrypted {
-    let input: Vec<_> = include_str!("../../4.txt")
+    include_str!("../../4.txt")
         .lines()
         .map(hex::decode)
-        .collect();
-    best_single_character_xor(&input)
+        .flat_map(|line| single_byte_decrypt_candidates(&line))
+        .max_by_key(|decrypted| decrypted.score)
+        .unwrap()
 }
 
 fn score_key_size(input: &[u8], keysize: usize) -> f64 {
@@ -95,10 +91,8 @@ fn score_key_size(input: &[u8], keysize: usize) -> f64 {
         .sum::<f64>()
 }
 
-fn challenge_6() -> String {
-    let mut input = include_str!("../../6.txt").to_owned();
-    input.retain(|c| !c.is_whitespace());
-    let input = base64::decode(&input);
+fn challenge_6() -> (String, String) {
+    let input = base64::decode(&include_str!("../../6.txt").replace("\n", ""));
 
     // Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
     // The KEYSIZE with the smallest normalized edit distance is probably the key.
@@ -121,22 +115,23 @@ fn challenge_6() -> String {
     }
 
     // Solve each block as if it was single-character XOR. You already have code to do this.
-    //  For each block, the single-byte XOR key that produces the best looking histogram
-    //  is the repeating-key XOR key byte for that block. Put them together and you have the key.
+    // For each block, the single-byte XOR key that produces the best looking histogram
+    // is the repeating-key XOR key byte for that block. Put them together and you have the key.
     let key: Vec<u8> = blocks
         .into_iter()
-        .map(|block| best_match(&block).cipher)
+        .map(|block| single_byte_decrypt(&block).cipher)
         .collect();
 
     let decrypted = repeating_key_xor(&input, &key);
-    String::from_utf8(decrypted).unwrap()
+    (
+        String::from_utf8(key).unwrap(),
+        String::from_utf8(decrypted).unwrap(),
+    )
 }
 
 fn challenge_7() -> String {
     print!("Part 7: ");
-    let mut input = include_str!("../../7.txt").to_owned();
-    input.retain(|c| !c.is_whitespace());
-    let input = base64::decode(&input);
+    let input = base64::decode(&include_str!("../../7.txt").replace("\n", ""));
 
     let key = b"YELLOW SUBMARINE";
     todo!();
@@ -145,6 +140,7 @@ fn challenge_7() -> String {
 fn main() {
     println!("Challenge 3: {}", challenge_3());
     println!("Challenge 4: {}", challenge_4());
-    println!("Challenge 6: {}", challenge_6());
+    let (key, plaintext) = challenge_6();
+    println!("Challenge 6: key=\"{}\"; plaintext=\n{}", key, plaintext);
     println!("Challenge 7: {}", challenge_7());
 }
